@@ -28,7 +28,7 @@ Using Sacred, you may run an experiment in the following way:
 
 If you don't want to use it, you can change the parameters directly in the code.
 
-**Important**: you must set the path of the dataset in `benchmark/pad.py` and `benchmark/isic.py`
+**Important**: you must set the path to the dataset in `benchmark/pad.py` and `benchmark/isic.py`
 
 
 ## Where can I find the datasets?
