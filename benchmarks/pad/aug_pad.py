@@ -39,9 +39,8 @@ class ImgTrainTransform:
         ])
 
     def __call__(self, img):
-        img = np.array(img)
+        img = self.aug.augment_image(np.array(img)).copy()
         transforms = torchvision.transforms.Compose([
-            self.aug.augment_image,
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize(self.normalization[0], self.normalization[1]),
         ])
