@@ -11,6 +11,5 @@ opencv-python
 pandas
 pillow
 tqdm
-torchsummary
 python-telegram-bot
 sacred

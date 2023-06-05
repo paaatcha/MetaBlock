@@ -28,8 +28,8 @@ class MyEffnet (nn.Module):
                     self.comb_feat_maps = 32
                     self.comb = MetaBlock(self.comb_feat_maps, comb_config)
                 elif isinstance(comb_config, list):
-                    self.comb = MetaBlock(self.comb_feat_maps, comb_config[1])
                     self.comb_feat_maps = comb_config[0]
+                    self.comb = MetaBlock(self.comb_feat_maps, comb_config[1])
                 else:
                     raise Exception(
                         "comb_config must be a list or int to define the number of feat maps and the metadata")
