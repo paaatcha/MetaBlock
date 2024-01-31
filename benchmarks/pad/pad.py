@@ -11,6 +11,7 @@ sys.path.insert(0,'../../my_models') # including the path to my_models folder
 from constants import RAUG_PATH
 sys.path.insert(0,RAUG_PATH)
 from raug.loader import get_data_loader
+from raug.checkpoints import save_model_as_onnx
 from raug.train import fit_model
 from raug.eval import test_model
 from my_model import set_model
@@ -32,19 +33,21 @@ ex = Experiment()
 @ex.config
 def cnfg():
 
+    _save_onnx = False
+
     # Dataset variables
-    _folder = 1
-    _base_path = "/home/patcha/Datasets/PAD-UFES-20"
+    _folder = 3
+    _base_path = "/home/apacheco/Datasets/PAD-UFES-20"
     _csv_path_train = os.path.join(_base_path, "pad-ufes-20_parsed_folders.csv")
     _csv_path_test = os.path.join(_base_path, "pad-ufes-20_parsed_test.csv")
     _imgs_folder_train = os.path.join(_base_path, "imgs")
 
     _use_meta_data = True
     _neurons_reducer_block = 0
-    _comb_method = None # metanet, concat, or metablock
-    _comb_config = None # number of metadata
+    _comb_method = "metablock" # metanet, concat, or metablock
+    _comb_config = [64, 45] # number of metadata
     _batch_size = 30
-    _epochs = 150
+    _epochs = 120
 
     # Training variables
     _best_metric = "loss"
@@ -68,29 +71,41 @@ def cnfg():
 
 @ex.automain
 def main (_folder, _csv_path_train, _imgs_folder_train, _lr_init, _sched_factor, _sched_min_lr, _sched_patience,
-          _batch_size, _epochs, _early_stop, _weights, _model_name, _pretrained, _save_folder, _csv_path_test,
+          _batch_size, _epochs, _early_stop, _weights, _model_name, _pretrained, _save_folder, _csv_path_test, _save_onnx,
           _best_metric, _neurons_reducer_block, _comb_method, _comb_config, _use_meta_data, _metric_early_stop):
 
-    meta_data_columns = ["smoke_False", "smoke_True", "drink_False", "drink_True", "background_father_POMERANIA",
-                         "background_father_GERMANY", "background_father_BRAZIL", "background_father_NETHERLANDS",
-                         "background_father_ITALY", "background_father_POLAND",	"background_father_UNK",
-                         "background_father_PORTUGAL", "background_father_BRASIL", "background_father_CZECH",
-                         "background_father_AUSTRIA", "background_father_SPAIN", "background_father_ISRAEL",
-                         "background_mother_POMERANIA", "background_mother_ITALY", "background_mother_GERMANY",
-                         "background_mother_BRAZIL", "background_mother_UNK", "background_mother_POLAND",
-                         "background_mother_NORWAY", "background_mother_PORTUGAL", "background_mother_NETHERLANDS",
-                         "background_mother_FRANCE", "background_mother_SPAIN", "age", "pesticide_False",
-                         "pesticide_True", "gender_FEMALE", "gender_MALE", "skin_cancer_history_True",
+    # meta_data_columns = ["smoke_False", "smoke_True", "drink_False", "drink_True", "background_father_POMERANIA",
+    #                      "background_father_GERMANY", "background_father_BRAZIL", "background_father_NETHERLANDS",
+    #                      "background_father_ITALY", "background_father_POLAND",	"background_father_UNK",
+    #                      "background_father_PORTUGAL", "background_father_BRASIL", "background_father_CZECH",
+    #                      "background_father_AUSTRIA", "background_father_SPAIN", "background_father_ISRAEL",
+    #                      "background_mother_POMERANIA", "background_mother_ITALY", "background_mother_GERMANY",
+    #                      "background_mother_BRAZIL", "background_mother_UNK", "background_mother_POLAND",
+    #                      "background_mother_NORWAY", "background_mother_PORTUGAL", "background_mother_NETHERLANDS",
+    #                      "background_mother_FRANCE", "background_mother_SPAIN", "age", "pesticide_False",
+    #                      "pesticide_True", "gender_FEMALE", "gender_MALE", "skin_cancer_history_True",
+    #                      "skin_cancer_history_False", "cancer_history_True", "cancer_history_False",
+    #                      "has_piped_water_True", "has_piped_water_False", "has_sewage_system_True",
+    #                      "has_sewage_system_False", "fitspatrick_3.0", "fitspatrick_1.0", "fitspatrick_2.0",
+    #                      "fitspatrick_4.0", "fitspatrick_5.0", "fitspatrick_6.0", "region_ARM", "region_NECK",
+    #                      "region_FACE", "region_HAND", "region_FOREARM", "region_CHEST", "region_NOSE", "region_THIGH",
+    #                      "region_SCALP", "region_EAR", "region_BACK", "region_FOOT", "region_ABDOMEN", "region_LIP",
+    #                      "diameter_1", "diameter_2", "itch_False", "itch_True", "itch_UNK", "grew_False", "grew_True",
+    #                      "grew_UNK", "hurt_False", "hurt_True", "hurt_UNK", "changed_False", "changed_True",
+    #                      "changed_UNK", "bleed_False", "bleed_True", "bleed_UNK", "elevation_False", "elevation_True",
+    #                      "elevation_UNK"]
+
+    meta_data_columns = ["age", "gender_FEMALE", "gender_MALE", "skin_cancer_history_True",
                          "skin_cancer_history_False", "cancer_history_True", "cancer_history_False",
-                         "has_piped_water_True", "has_piped_water_False", "has_sewage_system_True",
-                         "has_sewage_system_False", "fitspatrick_3.0", "fitspatrick_1.0", "fitspatrick_2.0",
-                         "fitspatrick_4.0", "fitspatrick_5.0", "fitspatrick_6.0", "region_ARM", "region_NECK",
+                         "fitspatrick_1.0", "fitspatrick_2.0", "fitspatrick_3.0", "fitspatrick_4.0", 
+                         "fitspatrick_5.0", "fitspatrick_6.0", "region_ARM", "region_NECK",
                          "region_FACE", "region_HAND", "region_FOREARM", "region_CHEST", "region_NOSE", "region_THIGH",
                          "region_SCALP", "region_EAR", "region_BACK", "region_FOOT", "region_ABDOMEN", "region_LIP",
-                         "diameter_1", "diameter_2", "itch_False", "itch_True", "itch_UNK", "grew_False", "grew_True",
-                         "grew_UNK", "hurt_False", "hurt_True", "hurt_UNK", "changed_False", "changed_True",
-                         "changed_UNK", "bleed_False", "bleed_True", "bleed_UNK", "elevation_False", "elevation_True",
-                         "elevation_UNK"]
+                         "itch_False", "itch_True", "itch_UNK", "grew_False", "grew_True", "grew_UNK", "hurt_False", 
+                         "hurt_True", "hurt_UNK", "changed_False", "changed_True", "changed_UNK", "bleed_False", 
+                         "bleed_True", "bleed_UNK", "elevation_False", "elevation_True", "elevation_UNK"]
+
+    
 
     _metric_options = {
         'save_all_path': os.path.join(_save_folder, "best_metrics"),
@@ -151,6 +166,7 @@ def main (_folder, _csv_path_train, _imgs_folder_train, _lr_init, _sched_factor,
         _weights = (_freq.sum() / _freq).round(3)
 
     loss_fn = nn.CrossEntropyLoss(weight=torch.Tensor(_weights).cuda())
+    # optimizer = optim.Adam(model.parameters(), lr=_lr_init)
     optimizer = optim.SGD(model.parameters(), lr=_lr_init, momentum=0.9, weight_decay=0.001)
     scheduler_lr = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=_sched_factor, min_lr=_sched_min_lr,
                                                                     patience=_sched_patience)

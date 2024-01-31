@@ -7,4 +7,4 @@ Please, use this file to set the constants that will be used to load important l
 """
 
 # The path to Raug. You may find it here: https://github.com/paaatcha/raug
-RAUG_PATH = "/home/patcha/Codes/raug_folder"
+RAUG_PATH = "/home/apacheco/code/raug"
