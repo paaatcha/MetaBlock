@@ -36,7 +36,7 @@ def cnfg():
     _save_onnx = False
 
     # Dataset variables
-    _folder = 3
+    _folder = 5
     _base_path = "/home/apacheco/Datasets/PAD-UFES-20"
     _csv_path_train = os.path.join(_base_path, "pad-ufes-20_parsed_folders.csv")
     _csv_path_test = os.path.join(_base_path, "pad-ufes-20_parsed_test.csv")
